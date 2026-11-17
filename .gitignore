@@ -1,0 +1,12 @@
+# Local backups and database dumps
+/backup/
+*.sql
+
+# Public folder: generated assets and storage link
+/justlookandbook.com/build/
+/justlookandbook.com/hot
+/justlookandbook.com/storage
+
+# OS / editor
+Thumbs.db
+.DS_Store
