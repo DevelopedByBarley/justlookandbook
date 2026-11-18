@@ -57,7 +57,7 @@ Feature-ök:
 
 - [x] 13. **Ország és város adatmodell** - `countries` és `cities` tábla (3 nyelvű név, egy kép, a város országhoz kötve), a programok nem kötelező ország- és városmezője, migrációk (1.1)
 - [x] 14. **Admin országkezelés** - lista, létrehozás, szerkesztés, törlés, 3 nyelvű név és kép, menüpont az admin navigációban (2.1)
-- [ ] 15. **Admin városkezelés** - ország szerint szűrhető lista, CRUD, 3 nyelvű név, kép, országhoz rendelés (2.2)
+- [x] 15. **Admin városkezelés** - ország szerint szűrhető lista, CRUD, 3 nyelvű név, kép, országhoz rendelés (2.2)
 - [ ] 16. **Program ország- és városmezője** - nem kötelező ország- és városválasztó a program űrlapon, a városlista az országtól függ, a város csak a kiválasztott országhoz tartozhat (2.3)
 - [ ] 17. **Helyválasztó első látogatáskor** - felugró ablak, előbb ország, majd város képekkel, kihagyható (ekkor minden program látszik), program adatlapon nem ugrik fel, mobilra optimalizált; a választást a böngésző tárolja, visszatéréskor a lista azonnal arra szűrve jelenik meg, tetején a hely képével (3.1, 3.3)
 - [ ] 18. **Helyválasztó a navigációban** - mindig látszik, mi van kiválasztva; ország- és városváltó, illetve "összes program" a felső menüben, külön felugró ablakkal, asztali és mobil nézetben (3.2)

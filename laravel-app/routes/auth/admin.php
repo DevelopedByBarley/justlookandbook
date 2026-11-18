@@ -27,6 +27,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         require __DIR__.'/../admin/topics.php';
         require __DIR__.'/../admin/countries.php';
+        require __DIR__.'/../admin/cities.php';
         require __DIR__.'/../admin/programs.php';
 
         Route::get('settings', [AdminSettingController::class, 'edit'])->name('settings.edit');
