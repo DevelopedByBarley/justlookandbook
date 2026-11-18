@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 class Program extends Model
 {
     protected $fillable = [
-        'slug', 'name', 'description',
+        'slug', 'country_id', 'city_id', 'name', 'description',
         'price_adult', 'price_child', 'child_age_min', 'child_age_max',
         'duration', 'available_days', 'group_size', 'youtube_embed', 'active', 'views', 'sort_order',
     ];
@@ -30,6 +31,16 @@ class Program extends Model
             $program->images->each(fn ($image) => $image->delete());
             Storage::disk('public')->deleteDirectory("programs/{$program->id}");
         });
+    }
+
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class);
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 
     public function topics(): BelongsToMany

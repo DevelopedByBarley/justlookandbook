@@ -13,7 +13,10 @@ for optional tool settings.
 
 ## What this is
 
-A description of your project and the problem it solves.
+**Just Look and Book** (justlookandbook.com): a multilingual (hu/en/it) program
+catalog built with Laravel 13, Blade, Alpine.js, and Tailwind CSS v4. Visitors
+browse programs by topic and book via WhatsApp, Messenger, Viber, or the contact
+form; admins manage programs, topics, and settings in a separate admin area.
 
 This project is built with the **AI Blueprint**, a workflow layer, not an
 app skeleton. To start a new project, scaffold the app first in an empty folder
@@ -82,16 +85,24 @@ explicit-only `autopilot` and `continuous`.
 ## Commands
 
 <!-- blueprint:onboarding-required -->
-For a standard Next.js project. Change or remove if you're using something else.
+Laravel 13 (PHP 8.3+, Composer) with Vite 8 (npm). Run from `laravel-app/`.
 
-- Dev server: `npm run dev` (http://localhost:3000)
-- Build: `npm run build`
-- Production server: `npm run start`
-- Lint: `npm run lint`
+- Setup: `composer setup` (install, `.env`, key, migrate, npm install, build)
+- Dev: `composer dev` (`php artisan serve` + queue listener + Pail logs + Vite);
+  locally the site also runs under XAMPP, then `npm run dev` is enough for assets
+- Build assets: `npm run build`
+- Migrations: `php artisan migrate`
 
-Testing is opt-in. If this project does not already have a unit test runner, run
-`/tests` or `$tests` to add one and update this section with the real test
-commands.
+The web root is `../justlookandbook.com/` (set via `usePublicPath` in
+`bootstrap/app.php`), not `laravel-app/public/`.
+
+No `Test` command is declared yet. Pest 4 is installed (`php artisan test`), but
+the suite only has the default example tests and is currently red, so testing
+is not a gate. Run `/tests` or `$tests` to adopt it and add the real `Test`
+command here.
+
+No `Lint` command is declared: Laravel Pint is installed, but the codebase does
+not follow its default preset (see `blueprint/context/coding-standards.md`).
 
 Browser testing is also opt-in. Run `/tests browser` or `$tests browser` to add
 or normalize a browser harness and document its exact command as `Browser

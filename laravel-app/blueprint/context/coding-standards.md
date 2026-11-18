@@ -1,103 +1,106 @@
 # Coding Standards
 
-> Your conventions. Edit these once to match your stack. The defaults below
-> assume Next.js + TypeScript + Tailwind + Prisma; change or trim anything that
-> doesn't fit your project.
->
-> Run `/onboard` after installing the Blueprint. It tunes this file to the real
-> project stack, along with `AGENTS.md`, `CLAUDE.md` when present,
-> `ai-interaction.md`, `.gitignore`, and README placement. Review the result
-> before `/overview`.
+> Adopted from the existing codebase on 2026-11-17 (`/adopt`). These rules
+> describe what the code already does. Follow them for new work; do not
+> restyle existing code unless a feature asks for it.
 
-## TypeScript
+## PHP and Laravel
 
-- Strict mode enabled
-- No `any` types - use proper typing or `unknown`
-- Define interfaces for all props, API responses, and data models
-- Use type inference where obvious, explicit types where helpful
+- PHP 8.3+, Laravel 13 with the slim `bootstrap/app.php` configuration
+  (middleware, exception handling, and routing are configured there, no Kernel).
+- Typed method signatures and return types (`View`, `RedirectResponse`,
+  `JsonResponse`, relation types).
+- Eloquent models with `$fillable` and `$casts`; model events in `booted()`
+  (for example cleaning up images on program delete, auto-slug on topic save).
+- Small static helpers on models are accepted (`Setting::get()` /
+  `Setting::set()`, `License::generateKey()`).
+- Plain controllers per resource. Simple CRUD can reuse
+  `App\Http\Controllers\Admin\Concerns\HasCrudActions`.
+- Validation inline with `$request->validate()` or `Validator::make()`, or a
+  Form Request (`app/Http/Requests/Admin/`) when it is reused.
+- Rate limiters are defined in `AppServiceProvider` and applied with
+  `throttle:<name>` on the route.
+- Shared non-HTTP logic goes in `app/Support/`.
 
-## React
+## Routing
 
-- Functional components only (no class components)
-- Use hooks for state and side effects
-- Keep components focused - one job per component
-- Extract reusable logic into custom hooks
+- `routes/web.php` holds the public home, sitemap, and language switch, and
+  `require`s the feature route files: `routes/programs.php`,
+  `routes/contact.php`, `routes/auth/*.php`, and `routes/admin/*.php`.
+- Admin routes live under the `admin` prefix and `admin.` name prefix, behind
+  `auth:admin` (guest pages behind `guest:admin`).
+- Every route is named. Admin resources use `Route::resource(...)->except(['show'])`.
 
-## Next.js
+## Auth
 
-- Server components by default
-- Only use `'use client'` when needed (interactivity, hooks, browser APIs)
-- Use Server Actions for form submissions and simple mutations
-- Use API routes when you need:
-  - Webhooks (Clerk, GitHub, etc.)
-  - File uploads with progress tracking
-  - Long-running operations
-  - Specific HTTP status codes or headers
-  - Endpoints for future mobile/CLI clients
-  - Third-party integrations
-- Otherwise, fetch data directly in server components
-- Dynamic routes for item/collection pages
+- Admins use a separate session guard `admin` with the `Admin` model and
+  `admins` provider. The default `web` guard and `users` table are unused.
+- Admin login and password-reset endpoints are throttled.
 
-## File Organization
+## Localization
 
-- Components: `src/components/[feature]/ComponentName.tsx`
-- Pages: `src/app/[route]/page.tsx`
-- Server Actions: `src/actions/[feature].ts`
-- Types: `src/types/[feature].ts`
-- Lib/Utils: `src/lib/[utility].ts`
+- Supported locales: `hu`, `en`, `it` (`App\Http\Middleware\SetLocale`); the
+  chosen locale is stored in the session.
+- UI strings live in `lang/{hu,en,it}/<area>.php` and are used via `__()`. Add
+  every new key to all three files.
+- Translatable model fields are JSON columns cast to `array`, keyed by locale,
+  read through `getTranslation()` with Hungarian as the fallback.
+- The admin UI and admin validation messages are in Hungarian only.
 
-## Naming
+## Views and Frontend
 
-- Components: PascalCase (`ItemCard.tsx`)
-- Files: Match component name or kebab-case
-- Functions: camelCase
-- Constants: SCREAMING_SNAKE_CASE
-- Types/Interfaces: PascalCase (no prefix)
-
-## Styling
-
-- Tailwind CSS for all styling
-- Tailwind v4: CSS-first config (`@theme` in `globals.css`), no `tailwind.config.js`
-- Use shadcn/ui components where applicable
-- No inline styles
-- Dark mode first, light mode as option
+- Blade views in `resources/views/<area>/`, reusable pieces as anonymous Blade
+  components in `resources/views/components/` (`<x-layout>`,
+  `<x-admin-layout>`, etc.).
+- Interactivity with Alpine.js (`Alpine.data(...)` in `resources/js/app.js`)
+  and small vanilla scripts; no SPA framework.
+- Styling with Tailwind CSS v4, CSS-first config in `resources/css/app.css`. A
+  few inline `style=""` attributes exist; prefer Tailwind classes for new code.
+- Rich text (program descriptions) is edited with Tiptap via the
+  `rich-editor` component and rendered with `{!! !!}`. This is acceptable only
+  because admins are trusted; never render visitor input unescaped.
 
 ## Database
 
-- Use Prisma ORM for all database operations
-- Always use `prisma migrate dev` for schema changes (not `db push`)
-- Run `prisma migrate status` before committing to verify migrations are in sync
-- Production deployments must run `prisma migrate deploy` before the app starts
-
-## Data Fetching
-
-- Server components fetch directly with Prisma
-- Client components use Server Actions
-- Validate all inputs with Zod
-- Scope every user-owned query by the authenticated Clerk user id (`clerkUserId`); never trust a client-supplied user id
+- MySQL. Schema changes only through new migrations in `database/migrations/`
+  (never edit a migration that has already run in production).
+- Many-to-many via pivot tables (`program_topic`).
+- Uploaded files go to the `public` disk under a per-record folder
+  (`programs/{id}/`).
 
 ## Error Handling
 
-- Use try/catch in Server Actions
-- Return `{ success, data, error }` pattern from actions
-- Display user-friendly error messages via toast
+- User-facing forms redirect `back()` with errors and old input, and jump to
+  the form with `withFragment()` when it sits lower on the page.
+- Failures that would lose a visitor's message are logged and reported through
+  `ContactFailureNotifier`, which never throws.
+- Special-case HTTP errors (419, 429) for a route in `bootstrap/app.php`
+  `withExceptions()`, not in the controller.
+
+## Naming
+
+- Classes PascalCase; admin controllers prefixed `Admin` (`AdminProgramController`).
+- Methods and variables camelCase; constants SCREAMING_SNAKE_CASE.
+- Views, components, and route files kebab-case (`admin-password.php`,
+  `language-switcher.blade.php`); partials prefixed with `_` (`_form.blade.php`).
+- Route names dotted (`admin.programs.index`, `contact.store`).
+
+## Formatting
+
+- Laravel Pint is installed but not applied: the codebase uses aligned `=>`
+  and `=` columns that Pint's default preset would rewrite. Do not run Pint on
+  whole files; match the surrounding style.
+- Code comments are in Hungarian, matching the existing code.
 
 ## Testing
 
-The blueprint installs no test runner; testing is opt-in at the project level,
-because the overlay can't know your stack. Adding unit testing is an explicit
-setup task the AI can do through the normal workflow, either as a build-plan item
-or with `/tests`. The setup should choose the stack-native runner, wire the
-scripts or commands, add a small example test, and update the Commands section
-of `AGENTS.md`.
+The blueprint installs no test runner; testing is opt-in at the project level.
 
-When `AGENTS.md` declares a `Verify` command, treat it as the umbrella automated
-gate. It combines only the checks this project actually has, in this order when
-available: typecheck, tests, then build. The command does not enable an absent
-test runner or replace focused evidence. It gives local work and optional CI one
-exact command to run. `/ci` owns Verify and CI setup. `/tests` adds the real test
-command to Verify when it already exists, but never creates CI only because
-testing was configured.
+Current state: **testing is not adopted yet.** Pest 4 (`pestphp/pest`,
+`pest-plugin-laravel`) is installed and `php artisan test` runs, but the suite
+holds only the two default example tests, and the feature example fails (no
+`RefreshDatabase`, so the in-memory SQLite has no tables). No `Test` command is
+declared in `AGENTS.md`, so tests are not a gate yet. Run `/tests` to adopt it.
 
 **The opt-in switch is one signal: a `test` command in the Commands section of
 `AGENTS.md`.** Declare one and **tests become a gate for logic-bearing steps**,
@@ -106,55 +109,42 @@ it already uses (run it, a screenshot, the build). Adding the runner is itself a
 deliberate step, never a silent mid-step install. This is the single definition
 of the switch; the skills and `ai-interaction.md` only point back here.
 
-- **What to test (the scope rule):** pure logic where a wrong answer is possible -
-  parsers, formatters, validators, id/slug builders, server actions. These have
-  assertable inputs and outputs and real edge cases (empty, missing, malformed).
-- **What not to test:** UI components and integration-level surfaces (render or
-  export routes, anything driving a real browser or external service). Verify those
-  with a screenshot and the build, not brittle unit tests.
-- **The gate (when a runner is configured):** a build step that adds in-scope logic
-  must ship a passing test in the same reviewable diff. The project's test command
-  must be green before the step is approved, before any checkpoint commit, and
-  before `/complete` merges. UI and integration-only steps are exempt and ride on
-  screenshot plus build evidence.
-- **When it's named:** the `/feature` spec's Testing section predicts the coverage,
-  `/implement` writes the test with the step, and if a step surfaces logic the spec
-  didn't foresee, add a focused test then.
-- An empty suite should fail, not pass, so "no tests ran" never looks like "passed".
-- Test files live next to source files (for example `feature.test.ts`).
-- Run them via the project's test command (see Commands in `AGENTS.md`), not a
-  hardcoded tool name.
+When `AGENTS.md` declares a `Verify` command, treat it as the umbrella automated
+gate. It combines only the checks this project actually has. `/ci` owns Verify
+and CI setup.
 
-Stack binding (swap for yours): a TypeScript app uses Vitest, `vi.mock()` for
-external dependencies (Prisma, Clerk, etc.), and `vi.useFakeTimers()` for
-time-dependent logic; a Python app would use pytest; a Go app `go test`.
+- **What to test (the scope rule):** logic where a wrong answer is possible -
+  validation rules, slug builders, translation fallbacks, YouTube URL parsing,
+  ordering, throttled or failure-handling flows. Pest feature tests over HTTP
+  routes are the stack-native way to cover controllers.
+- **What not to test:** pure visual layout and third-party widgets. Verify those
+  with a screenshot and the build.
+- **The gate (once a test command is declared):** a step that adds in-scope
+  logic ships a passing test in the same diff, and the test command must be green
+  before approval, checkpoint commits, and `/complete`.
+- An empty suite should fail, not pass, so "no tests ran" never looks like "passed".
+- Tests live in `tests/Feature` and `tests/Unit` (Pest), run via the project's
+  test command, not a hardcoded tool name.
 
 ## Browser Verification
 
 For UI and integration behavior, prefer real browser evidence over reading the
 code and assuming it works.
 
-- Browser automation is separately opt-in through `/tests browser`. That setup
-  reuses a compatible runner or prefers Playwright for supported projects, then
-  documents the exact command as `Browser tests` in `AGENTS.md`.
-- When `Browser tests` is declared, add focused coverage for stable behavioral
-  done-whens when it is proportionate, and run the documented command during
-  `/check`. Do not assume it proves visual fidelity, real authenticated-profile
-  behavior, browser chrome, or another claim the test does not observe.
-- If no Browser tests command is declared, do not add a runner silently in the
-  middle of an unrelated feature. Use the available dev server, browser
-  screenshots, build output, API output, or manual evidence instead.
-- Browser tests are not part of the default Verify command or CI unless the user
-  separately chooses that slower gate.
-- Browser evidence is especially important for flows that click, type, submit,
-  navigate, download files, render complex layouts, or depend on client-side
-  state.
+- Browser automation is separately opt-in through `/tests browser`. None is set
+  up yet.
+- Without a `Browser tests` command, use the local site (XAMPP or
+  `php artisan serve`), screenshots, and `npm run build` output as evidence. Do
+  not add a runner silently in the middle of an unrelated feature.
+- Check all three locales when a change touches visible text.
 
 ## Code Quality
 
-- No commented-out code unless specified
-- No unused imports or variables
-- Keep functions under 50 lines when possible
+- No new commented-out code. Existing disabled code (for example in
+  `CheckLicense` and `bootstrap/app.php`) is left as is unless a feature
+  removes it.
+- No unused imports or variables in new code.
+- Keep functions under 50 lines when possible.
 
 ## Comments
 
@@ -169,7 +159,7 @@ Over-commenting is a common AI tell, so resist it.
   link to a spec or issue.
 - Prefer self-documenting names and small functions over explanatory comments.
 - Keep doc comments minimal: a one-line purpose on an exported type or function is
-  plenty; don't write JSDoc that just repeats the signature.
+  plenty; don't write PHPDoc that just repeats the signature.
 - When in doubt, leave the comment out.
 
 ## Writing
