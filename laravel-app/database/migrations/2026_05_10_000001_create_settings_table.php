@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Meglévő (importált) adatbázisban a tábla már létezik, csak a migrations-sor hiányzik.
+        if (Schema::hasTable('settings')) {
+            return;
+        }
+
         Schema::create('settings', function (Blueprint $table) {
             $table->string('key')->primary();
             $table->text('value')->nullable();
